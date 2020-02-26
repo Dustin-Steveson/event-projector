@@ -6,10 +6,12 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="EventStore.Client" Version="5.0.6" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="3.1.2" />
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\EventProjector.EventStore\EventProjector.EventStore.csproj" />
     <ProjectReference Include="..\EventProjector\EventProjector.csproj" />
   </ItemGroup>
 

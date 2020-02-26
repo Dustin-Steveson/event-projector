@@ -22,9 +22,11 @@ namespace EventProjector
 
         public async Task Start(CancellationToken cancellationToken)
         {
+            await _eventStream.Start();
             while (cancellationToken.IsCancellationRequested == false)
             {
                 var eventWrapper = await _eventStream.GetEvent();
+                if (eventWrapper == null) continue;
                 if (_processEventDelegateCache.ContainsKey(eventWrapper.Event.GetType()) == false)
                 {
                     _processEventDelegateCache.Add(eventWrapper.Event.GetType(), GetProcessEventDelegate(eventWrapper.Event.GetType()));
