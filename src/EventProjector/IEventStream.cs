@@ -1,10 +1,12 @@
-﻿using System.Threading.Tasks;
+﻿using System;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace EventProjector
 {
     public interface IEventStream
     {
-        Task Start();
+        Task Start(IEnumerable<Type> eventTypes);
 
         Task Stop();
 

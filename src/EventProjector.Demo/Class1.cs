@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 
 namespace EventProjector.Demo
@@ -10,7 +11,7 @@ namespace EventProjector.Demo
         {
         }
 
-        public Task Start()
+        public Task Start(IEnumerable<Type> types)
         {
             return Task.CompletedTask;
         }

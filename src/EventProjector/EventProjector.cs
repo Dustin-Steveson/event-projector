@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Linq.Expressions;
 using System.Reflection;
 using System.Threading;
@@ -10,19 +11,24 @@ namespace EventProjector
     public class EventProjector
     {
         private readonly IEventStream _eventStream;
-        private readonly Func<Type, object> _handlerResolver;
+        private readonly Func<Type, IEventHandler> _handlerResolver;
+        private readonly Func<IEnumerable<IEventHandler>> _allHandlersResolver;
         private readonly IDictionary<Type, Func<EventWrapper, Task>> _processEventDelegateCache;
 
-        public EventProjector(IEventStream eventStream, Func<Type, object> handlerResolver)
+        public EventProjector(IEventStream eventStream, Func<Type, IEventHandler> handlerResolver, Func<IEnumerable<IEventHandler>> allHandlersResolver)
         {
             _eventStream = eventStream;
             _handlerResolver = handlerResolver;
+            _allHandlersResolver = allHandlersResolver;
             _processEventDelegateCache = new Dictionary<Type, Func<EventWrapper, Task>>();
         }
 
         public async Task Start(CancellationToken cancellationToken)
         {
-            await _eventStream.Start();
+
+            var handlers = _allHandlersResolver();
+            var types = handlers.Select(h => h.GetType().GenericTypeArguments.Single());
+            await _eventStream.Start(types);
             while (cancellationToken.IsCancellationRequested == false)
             {
                 var eventWrapper = await _eventStream.GetEvent();

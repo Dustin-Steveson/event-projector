@@ -2,6 +2,7 @@
 using EventStore.ClientAPI;
 using Microsoft.Extensions.DependencyInjection;
 using System;
+using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -19,8 +20,10 @@ namespace EventProjector.Demo
             .AddSingleton<IEventHandler<FakeEvent>, FakeEventHandler>()
             .AddSingleton<IEventStream, EventStoreEventStreamer>()
             .AddSingleton(EventStoreConnection.Create("ConnectTo=tcp://admin:changeit@localhost:1113; HeartBeatTimeout=500"))
-            .AddSingleton(new EventAssemblies(typeof(Program).Assembly))
-            .AddSingleton(serviceProvider => new EventProjector(serviceProvider.GetRequiredService<IEventStream>(), type => GetEventHandler(serviceProvider, type)))
+            .AddSingleton(serviceProvider => new EventProjector(
+                serviceProvider.GetRequiredService<IEventStream>(),
+                type => GetEventHandler(serviceProvider, type),
+                () => GetEventHandlers(serviceProvider)))
             .BuildServiceProvider();
 
             var projector = serviceProvider.GetRequiredService<EventProjector>();
@@ -28,15 +31,27 @@ namespace EventProjector.Demo
             await projector.Start(CancellationToken.None);
         }
 
-        private static object GetEventHandler(IServiceProvider sp, Type type)
+        private static IEventHandler GetEventHandler(IServiceProvider sp, Type type)
         {
             try
             {
-                return sp.GetRequiredService(type);
+                return (IEventHandler)sp.GetRequiredService(type);
             }
             catch (Exception e)
             {
-                throw new InvalidOperationException($"could not resolve IHandleEvents implementation for event type {type}", e);
+                throw new InvalidOperationException($"could not resolve IEventHandler implementation for event type {type}", e);
+            }
+        }
+
+        private static IEnumerable<IEventHandler> GetEventHandlers(IServiceProvider sp)
+        {
+            try
+            {
+                return sp.GetServices<IEventHandler>();
+            }
+            catch (Exception e)
+            {
+                throw new InvalidOperationException($"could not resolve IEventHandlers", e);
             }
         }
     }
