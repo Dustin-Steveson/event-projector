@@ -31,14 +31,17 @@ namespace EventProjector
             await _eventStream.Start(types);
             while (cancellationToken.IsCancellationRequested == false)
             {
-                var eventWrapper = await _eventStream.GetEvent();
-                if (eventWrapper == null) continue;
-                if (_processEventDelegateCache.ContainsKey(eventWrapper.Event.GetType()) == false)
+                var eventWrappers = await _eventStream.GetEvents();
+
+                foreach (var eventWrapper in eventWrappers)
                 {
-                    _processEventDelegateCache.Add(eventWrapper.Event.GetType(), GetProcessEventDelegate(eventWrapper.Event.GetType()));
+                    if (_processEventDelegateCache.ContainsKey(eventWrapper.Event.GetType()) == false)
+                    {
+                        _processEventDelegateCache.Add(eventWrapper.Event.GetType(), GetProcessEventDelegate(eventWrapper.Event.GetType()));
+                    }
+
+                    await _processEventDelegateCache[eventWrapper.Event.GetType()](eventWrapper);
                 }
-                
-                await _processEventDelegateCache[eventWrapper.Event.GetType()](eventWrapper);
             }
         }
 

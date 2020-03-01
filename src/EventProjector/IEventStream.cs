@@ -10,6 +10,6 @@ namespace EventProjector
 
         Task Stop();
 
-        Task<EventWrapper> GetEvent();
+        Task<IEnumerable<EventWrapper>> GetEvents();
     }
 }

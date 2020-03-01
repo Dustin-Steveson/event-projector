@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace EventProjector.Demo
@@ -21,9 +22,9 @@ namespace EventProjector.Demo
             return Task.CompletedTask;
         }
 
-        public Task<EventWrapper> GetEvent()
+        public Task<IEnumerable<EventWrapper>> GetEvents()
         {
-            return Task.FromResult(new EventWrapper<FakeEvent>(new FakeEvent { Name = "Test" }, new Metadata()) as EventWrapper);
+            return Task.FromResult(new [] { new EventWrapper<FakeEvent>(new FakeEvent { Name = "Test" }, new Metadata()) as EventWrapper }.Select(x => x));
         }
     }
 

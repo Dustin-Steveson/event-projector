@@ -21,24 +21,20 @@ namespace EventProjector.EventStore
             _position = new Position(0, 0);
             _cachedTypes = new Dictionary<string, Type>();
         }
-        public async Task<EventWrapper> GetEvent()
+        public async Task<IEnumerable<EventWrapper>> GetEvents()
         {
-            var events = await _connection.ReadAllEventsForwardAsync(_position, 1, false, new UserCredentials("admin", "changeit"));
+            var eventStoreResponse = await _connection.ReadAllEventsForwardAsync(_position, 100, false);
 
-            if(events.Events.Length == 0)
-            {
-                return null;
-            }
+            _position = eventStoreResponse.NextPosition;
 
-            _position = events.NextPosition;
+            var events = eventStoreResponse
+                .Events
+                .Where(e => _cachedTypes.ContainsKey(e.Event.EventType))
+                .Select(e => new EventWrapper(
+                JsonConvert.DeserializeObject(Encoding.UTF8.GetString(e.Event.Data), _cachedTypes[e.Event.EventType]),
+                JsonConvert.DeserializeObject<Metadata>(Encoding.UTF8.GetString(e.Event.Metadata))));
 
-            var @event = events.Events.SingleOrDefault();
-
-            if (_cachedTypes.ContainsKey(@event.Event.EventType) == false) return null;
-
-            return new EventWrapper(
-                JsonConvert.DeserializeObject(Encoding.UTF8.GetString(@event.Event.Data), _cachedTypes[@event.Event.EventType]),
-                JsonConvert.DeserializeObject<Metadata>(Encoding.UTF8.GetString(@event.Event.Metadata)));
+            return events;
         }
 
         public async Task Start(IEnumerable<Type> types)
